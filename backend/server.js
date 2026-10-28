@@ -1,0 +1,11 @@
+require('dotenv').config();
+const path=require('path');const express=require('express');const helmet=require('helmet');const cors=require('cors');const rateLimit=require('express-rate-limit');
+const authRoutes=require('./routes/auth');const studentRoutes=require('./routes/students');const companyRoutes=require('./routes/companies');const driveRoutes=require('./routes/drives');const applicationRoutes=require('./routes/applications');
+const app=express();app.disable('x-powered-by');app.use(helmet({contentSecurityPolicy:false}));app.use(cors({origin:false}));app.use(express.json({limit:'100kb'}));
+app.use('/api/auth',rateLimit({windowMs:15*60*1000,limit:30,standardHeaders:true,legacyHeaders:false}),authRoutes);
+app.get('/api/health',(req,res)=>res.json({status:'ok',service:'Students Placement and Internship Management Program'}));
+app.use('/api/students',studentRoutes);app.use('/api/companies',companyRoutes);app.use('/api/drives',driveRoutes);app.use('/api/applications',applicationRoutes);
+app.use(express.static(path.join(__dirname,'..','frontend')));
+app.use('/api',(req,res)=>res.status(404).json({error:'API endpoint not found.'}));
+app.use((err,req,res,next)=>{console.error('Request failed:',err.message);const status=Number.isInteger(err.status)?err.status:500;res.status(status).json({error:status===500?'Something went wrong. Check the server configuration and database connection.':err.message});});
+const port=Number(process.env.PORT)||3000;app.listen(port,()=>console.log(`App running at http://localhost:${port}`));
